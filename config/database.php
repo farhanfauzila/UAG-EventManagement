@@ -1,20 +1,23 @@
 <?php
 class Database {
     private $host = "localhost";
-    private $db_name = "test123"; // Ganti dengan DB Anda
-    private $username = "";          // Ganti dengan user DB Anda
-    private $password = "";     // Ganti dengan password DB Anda
+    private $port = "5432";          
+    private $db_name = "management_event";    // Sesuaikan dengan nama DB kamu
+    private $username = "postgres";  // Biasanya default-nya 'postgres'
+    private $password = "1234";   // Masukkan password pgAdmin kamu
     public $conn;
 
     public function getConnection() {
         $this->conn = null;
         try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password
-            );
+            // Perhatikan perubahan dari "mysql" menjadi "pgsql"
+            $dsn = "pgsql:host=" . $this->host . ";port=" . $this->port . ";dbname=" . $this->db_name;
+            
+            $this->conn = new PDO($dsn, $this->username, $this->password);
+            
+            // Mengatur error mode agar jika ada typo di SQL langsung muncul pesannya
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
         } catch(PDOException $exception) {
             echo "Connection error: " . $exception->getMessage();
         }

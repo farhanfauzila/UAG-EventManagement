@@ -1,81 +1,70 @@
 <?php
-include_once 'config/database.php';
 include_once 'models/User.php';
 
 class UserController {
     private $userModel;
 
-    public function __construct() {
-        $database = new Database();
-        $db = $database->getConnection();
+    public function __construct($db) {
+        if ($db === null) {
+            die("Koneksi database ke UserController gagal!");
+        }
         $this->userModel = new User($db);
     }
 
-    public function index() {
-        $stmt = $this->userModel->read();
-        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        include 'views/index.php';
-    }
-
-    public function create() {
-        include 'views/create.php';
-    }
-
-    // UPDATE: Menambahkan Validasi
-    public function store() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name']);
-            $email = trim($_POST['email']);
-            $errors = [];
-
-            // Validasi sederhana
-            if (empty($name)) {
-                $errors[] = "Nama wajib diisi.";
-            }
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "Format email tidak valid.";
-            }
-
-            // Jika tidak ada error, simpan
-            if (empty($errors)) {
-                $this->userModel->create($name, $email);
-                header("Location: index.php");
+    public function login() {
+        if (isset($_SESSION['user_id'])) {
+            // Jika sudah login, cek role untuk redirect yang tepat
+            if ($_SESSION['role'] === 'admin') {
+                header("Location: index.php?action=admin_dashboard");
             } else {
-                // Jika error, kembali ke view create dengan membawa pesan error
-                include 'views/create.php';
+                header("Location: index.php?action=home");
             }
+            exit();
+        }
+    
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $email = $_POST['email'];
+            $password = $_POST['password'];
+    
+            $user = $this->userModel->getUserByEmail($email);
+    
+            if ($user) {
+                if ($password === $user['password']) {
+                    // Login Berhasil
+                    $_SESSION['user_id'] = $user['id_user'];
+                    $_SESSION['nama']    = $user['nama'];
+                    $_SESSION['role']    = $user['role'];
+    
+                    // Redirect berdasarkan ROLE
+                    if ($user['role'] === 'admin') {
+                        header("Location: index.php?action=admin_dashboard");
+                    } else {
+                        header("Location: index.php?action=home");
+                    }
+                    exit();
+                } else {
+                    $error = "Password yang Anda masukkan salah!";
+                    include 'views/login.php';
+                }
+            } else {
+                $error = "Email tidak terdaftar!";
+                include 'views/login.php';
+            }
+        } else {
+            include 'views/login.php';
         }
     }
 
-    public function edit($id) {
-        $user = $this->userModel->show($id);
-        include 'views/edit.php';
+    public function logout() {
+        // Jangan session_start lagi karena sudah ada di index.php
+        session_destroy();
+        header("Location: index.php?action=home");
+        exit();
     }
 
-    // UPDATE: Menambahkan Validasi pada Update
-    public function update($id) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim($_POST['name']);
-            $email = trim($_POST['email']);
-            $errors = [];
-
-            if (empty($name)) $errors[] = "Nama wajib diisi.";
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Format email tidak valid.";
-
-            if (empty($errors)) {
-                $this->userModel->update($id, $name, $email);
-                header("Location: index.php");
-            } else {
-                // Ambil data lama agar form tidak kosong saat error
-                $user = ['id' => $id, 'name' => $name, 'email' => $email];
-                include 'views/edit.php';
-            }
-        }
     }
 
-    public function delete($id) {
-        $this->userModel->delete($id);
-        header("Location: index.php");
-    }
-}
-?>
+    
+
+    // Fungsi lainnya (index, edit, update, delete) biarkan seperti adanya
+    // Hanya pastikan redirect-nya konsisten menggunakan ?action=...
