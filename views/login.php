@@ -29,7 +29,7 @@
                             <button type="submit" class="btn btn-primary w-100 py-2">Masuk</button>
                         </form>
                         <hr>
-                        <p class="text-center mb-0 small">Belum punya akun? <a href="#">Daftar disini</a></p>
+                        <p class="text-center mb-0 small">Belum punya akun?<a href="index.php?action=register" class="fw-semibold text-decoration-none">Daftar di sini</a></p>
                     </div>
                 </div>
             </div>

@@ -143,4 +143,33 @@ public function hapusPendaftaran($id_regist, $id_user) {
         $stmt->bindParam(':id_regist', $id_regist);
         return $stmt->execute();
     }
+    
+    public function getFilteredEvents($event_status = null, $payment_type = null)
+{
+    $sql = "SELECT * FROM events WHERE 1=1";
+    $params = [];
+
+    // FILTER STATUS EVENT
+    if (!empty($event_status)) {
+        $sql .= " AND status_event = :status_event";
+        $params[':status_event'] = $event_status;
+    }
+
+    // FILTER TIPE PEMBAYARAN
+    if (!empty($payment_type)) {
+        if ($payment_type === 'free') {
+            $sql .= " AND harga = 0";
+        } elseif ($payment_type === 'paid') {
+            $sql .= " AND harga > 0";
+        }
+    }
+
+    $sql .= " ORDER BY id_event DESC";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }
