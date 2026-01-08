@@ -8,8 +8,13 @@ class EventController {
         $this->eventModel = new Event($db);
     }
 
-    public function tampilkanKatalog() {
-        $data_event = $this->eventModel->getSemuaEvent(); 
+    public function tampilkanKatalog()
+    {
+        $event_status = $_GET['event_status'] ?? null;
+        $payment_type = $_GET['payment_type'] ?? null;
+        
+        $data_events = $this->eventModel->getFilteredEvents($event_status, $payment_type);
+        
         include 'views/katalog_event.php';
     }
 

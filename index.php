@@ -43,6 +43,10 @@ switch ($action) {
         $eventApp->tampilkanEventSaya();
         break;
 
+    case 'register':
+        $userApp->register();
+        break;
+
     case 'proses_daftar':
         $eventApp->prosesDaftar($id);
         break;
