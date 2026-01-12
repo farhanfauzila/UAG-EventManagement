@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,18 +14,22 @@
             --accent: #d1e8fa;
         }
 
-        body { background-color: var(--base); font-family: 'Inter', 'Segoe UI', sans-serif; }
+        body {
+            background-color: var(--base);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
 
-        /* Full Screen Carousel */
         .carousel-item {
             height: 100vh;
             min-height: 600px;
         }
+
         .carousel-item img {
             height: 100vh;
             object-fit: cover;
             filter: brightness(40%) contrast(110%);
         }
+
         .carousel-caption {
             top: 50%;
             transform: translateY(-50%);
@@ -33,6 +38,7 @@
             max-width: 700px;
             left: 10%;
         }
+
         .carousel-caption h1 {
             font-size: 4.5rem;
             font-weight: 800;
@@ -41,6 +47,7 @@
             color: var(--accent);
             margin-bottom: 20px;
         }
+
         .carousel-caption p {
             font-size: 1.2rem;
             opacity: 0.9;
@@ -48,7 +55,6 @@
             padding-left: 20px;
         }
 
-        /* Modern Buttons */
         .btn-uag {
             background-color: var(--accent);
             color: var(--primary);
@@ -61,16 +67,20 @@
             letter-spacing: 1px;
             text-decoration: none;
             display: inline-block;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-        .btn-uag:hover { 
-            background-color: white; 
-            transform: translateY(-5px); 
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
-        /* Section Intro */
-        .intro-section { padding: 100px 0; background-color: white; }
+        .btn-uag:hover {
+            background-color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .intro-section {
+            padding: 100px 0;
+            background-color: white;
+        }
+
         .feature-box {
             padding: 40px;
             border-radius: 24px;
@@ -78,16 +88,24 @@
             border: 1px solid #eee;
             transition: 0.3s ease;
         }
-        .feature-box i { font-size: 3rem; color: var(--primary); margin-bottom: 20px; display: block; }
-        .feature-box:hover { background: var(--accent); transform: translateY(-10px); }
 
-        /* Event Terbaru dengan Background Custom */
+        .feature-box i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-box:hover {
+            background: var(--accent);
+            transform: translateY(-10px);
+        }
+
         .event-section {
             padding: 100px 0;
             position: relative;
-            /* GANTI URL DI BAWAH DENGAN FOTO KAMU */
-            background: linear-gradient(rgba(55, 100, 150, 0.9), rgba(55, 100, 150, 0.8)), 
-                        url('public/images/latar_event.jpg'); 
+            background: linear-gradient(rgba(55, 100, 150, 0.9), rgba(55, 100, 150, 0.8)),
+                url('public/images/latar_event.jpg');
             background-attachment: fixed;
             background-size: cover;
             color: white;
@@ -103,10 +121,20 @@
             transition: 0.4s;
             color: white;
         }
-        .card-event:hover { background: white; color: var(--primary); }
-        .card-event:hover .text-muted, .card-event:hover .text-white-50 { color: var(--primary) !important; opacity: 0.7; }
+
+        .card-event:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        .card-event:hover .text-muted,
+        .card-event:hover .text-white-50 {
+            color: var(--primary) !important;
+            opacity: 0.7;
+        }
     </style>
 </head>
+
 <body>
 
     <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
@@ -179,46 +207,48 @@
             </div>
 
             <div class="row g-4">
-    <?php if (!empty($events_terbaru)): foreach ($events_terbaru as $ev): ?>
-        <div class="col-md-4">
-            <div class="card card-event h-100 shadow">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="badge" style="background: var(--accent); color: var(--primary)">
-                            <?= htmlspecialchars($ev['tipe_event'] ?? 'EVENT') ?>
-                        </span>
-                        <small class="text-white-50">
-                            <?= isset($ev['tanggal_mulai']) ? date('d M Y', strtotime($ev['tanggal_mulai'])) : '-' ?>
-                        </small>
-                    </div>
+                <?php if (!empty($events_terbaru)):
+                    foreach ($events_terbaru as $ev): ?>
+                        <div class="col-md-4">
+                            <div class="card card-event h-100 shadow">
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span class="badge" style="background: var(--accent); color: var(--primary)">
+                                            <?= htmlspecialchars($ev['tipe_event'] ?? 'EVENT') ?>
+                                        </span>
+                                        <small class="text-white-50">
+                                            <?= isset($ev['tanggal_mulai']) ? date('d M Y', strtotime($ev['tanggal_mulai'])) : '-' ?>
+                                        </small>
+                                    </div>
 
-                    <h4 class="fw-bold mb-3"><?= htmlspecialchars($ev['nama_event'] ?? 'Untitled Event') ?></h4>
-                    
-                    <p class="text-white-50 small mb-4">
-                        <?php 
-                            $deskripsi_bersih = strip_tags($ev['deskripsi'] ?? '');
-                            echo substr($deskripsi_bersih, 0, 80) . (strlen($deskripsi_bersih) > 80 ? '...' : '');
-                        ?>
-                    </p>
+                                    <h4 class="fw-bold mb-3"><?= htmlspecialchars($ev['nama_event'] ?? 'Untitled Event') ?></h4>
 
-                    <div class="mt-auto d-flex justify-content-between align-items-center">
-                        <span class="fs-5 fw-bold">
-                            <?php 
-                                $harga = (float)($ev['harga'] ?? 0);
-                                echo $harga == 0 ? 'FREE' : 'Rp ' . number_format($harga, 0, ',', '.'); 
-                            ?>
-                        </span>
-                        <a href="index.php?action=detail&id=<?= $ev['id_event'] ?>" class="btn btn-light btn-sm px-3 fw-bold rounded-pill">Detail</a>
+                                    <p class="text-white-50 small mb-4">
+                                        <?php
+                                        $deskripsi_bersih = strip_tags($ev['deskripsi'] ?? '');
+                                        echo substr($deskripsi_bersih, 0, 80) . (strlen($deskripsi_bersih) > 80 ? '...' : '');
+                                        ?>
+                                    </p>
+
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        <span class="fs-5 fw-bold">
+                                            <?php
+                                            $harga = (float) ($ev['harga'] ?? 0);
+                                            echo $harga == 0 ? 'FREE' : 'Rp ' . number_format($harga, 0, ',', '.');
+                                            ?>
+                                        </span>
+                                        <a href="index.php?action=detail&id=<?= $ev['id_event'] ?>"
+                                            class="btn btn-light btn-sm px-3 fw-bold rounded-pill">Detail</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; else: ?>
+                    <div class="col-12 text-center py-5">
+                        <p class="text-muted">Tidak ada event tersedia saat ini.</p>
                     </div>
-                </div>
+                <?php endif; ?>
             </div>
-        </div>
-    <?php endforeach; else: ?>
-        <div class="col-12 text-center py-5">
-            <p class="text-muted">Tidak ada event tersedia saat ini.</p>
-        </div>
-    <?php endif; ?>
-</div>
         </div>
     </section>
 
@@ -228,4 +258,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

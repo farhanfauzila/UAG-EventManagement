@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,22 +16,20 @@
         }
 
         body {
-    font-family: 'Inter', sans-serif;
-    /* Ubah dari linear-gradient ke background-color solid atau buat gradiennya 'fixed' */
-    background: #1d4372; /* Warna dasar biru tua kamu */
-    background: linear-gradient(135deg, #1d4372 0%, #0a1d36 100%);
-    background-attachment: fixed; /* KUNCI PERBAIKAN: Background tidak ikut bergeser saat di-scroll */
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 0;
-    margin: 0;
-    position: relative;
-    overflow-x: hidden;
-}
+            font-family: 'Inter', sans-serif;
+            background: #1d4372;
+            background: linear-gradient(135deg, #1d4372 0%, #0a1d36 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-        /* Elemen Dekoratif Background */
         body::before {
             content: "";
             position: absolute;
@@ -55,7 +54,7 @@
             background: rgba(255, 255, 255, 0.95);
             border: none;
             border-radius: 30px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
         }
 
@@ -144,17 +143,24 @@
             color: #4361ee;
         }
 
-        /* Animasi Muncul */
         .animate-up {
             animation: fadeInUp 0.8s ease-out;
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="login-container animate-up">
@@ -183,11 +189,12 @@
                         <label class="form-label">Email Kampus</label>
                         <input type="email" name="email" class="form-control" placeholder="nim@uag.ac.id" required>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label class="form-label">Password</label>
                         <div class="input-group">
-                            <input type="password" name="password" id="password" class="form-control" style="border-right: none;" placeholder="••••••" required>
+                            <input type="password" name="password" id="password" class="form-control"
+                                style="border-right: none;" placeholder="••••••" required>
                             <span class="input-group-text" onclick="togglePassword()">
                                 <i class="bi bi-eye" id="toggleIcon"></i>
                             </span>
@@ -198,10 +205,10 @@
                         SIGN IN <i class="bi bi-arrow-right-short ms-1"></i>
                     </button>
                 </form>
-                
+
                 <div class="divider"></div>
-                
-                <p class="text-center mb-4 small text-muted">Belum punya akun? 
+
+                <p class="text-center mb-4 small text-muted">Belum punya akun?
                     <a href="index.php?action=register" class="footer-link">Daftar Sekarang</a>
                 </p>
 
@@ -215,18 +222,19 @@
     </div>
 
     <script>
-    function togglePassword() {
-        const passwordField = document.getElementById("password");
-        const toggleIcon = document.getElementById("toggleIcon");
-        
-        if (passwordField.type === "password") {
-            passwordField.type = "text";
-            toggleIcon.classList.replace("bi-eye", "bi-eye-slash");
-        } else {
-            passwordField.type = "password";
-            toggleIcon.classList.replace("bi-eye-slash", "bi-eye");
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            const toggleIcon = document.getElementById("toggleIcon");
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.classList.replace("bi-eye", "bi-eye-slash");
+            } else {
+                passwordField.type = "password";
+                toggleIcon.classList.replace("bi-eye-slash", "bi-eye");
+            }
         }
-    }
     </script>
 </body>
+
 </html>
