@@ -4,7 +4,7 @@ class Database {
     private $port = "5432";
     private $db_name = "management_event";
     private $username = "postgres";
-    private $password = "1234"; // ganti sesuai password postgres kamu
+    private $password = "1234"; 
     public $conn;
 
     public function getConnection() {

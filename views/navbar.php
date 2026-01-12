@@ -1,9 +1,8 @@
 <?php
 $action = $_GET['action'] ?? 'home';
 
-// Jangan tampilkan navbar di halaman tertentu
 if ($action === 'login' || $action === 'register' || $action === 'admin_dashboard') {
-    return; 
+    return;
 }
 
 // Logika cek apakah sekarang di Home atau bukan
@@ -11,19 +10,21 @@ $isHome = ($action === 'home' || $action === '');
 ?>
 
 <style>
-    /* Navbar Dasar */
     .navbar-uag {
         transition: all 0.4s ease-in-out;
         padding: 15px 0;
         /* Jika bukan home, langsung kasih background solid */
-        background: <?= $isHome ? 'transparent' : '#1d4372' ?> !important;
+        background:
+            <?= $isHome ? 'transparent' : '#1d4372' ?>
+            !important;
     }
 
     /* Gaya saat scroll atau jika bukan di home */
-    .navbar-uag.scrolled, .navbar-uag.not-home {
+    .navbar-uag.scrolled,
+    .navbar-uag.not-home {
         background: #1d4372 !important;
         padding: 10px 0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
 
     .nav-link {
@@ -46,9 +47,9 @@ $isHome = ($action === 'home' || $action === '');
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item"><a class="nav-link px-3" href="index.php?action=home">Home</a></li>
                 <li class="nav-item">
-    <a class="nav-link px-3" href="index.php?action=katalog&event_status=ongoing">Event</a>
-</li>
-                
+                    <a class="nav-link px-3" href="index.php?action=katalog&event_status=ongoing">Event</a>
+                </li>
+
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <li class="nav-item ms-lg-3">
                         <a class="btn btn-outline-light btn-sm rounded-pill px-4" href="index.php?action=my_events">
@@ -57,7 +58,8 @@ $isHome = ($action === 'home' || $action === '');
                     </li>
                 <?php else: ?>
                     <li class="nav-item ms-lg-3">
-                        <a class="btn rounded-pill px-4" href="index.php?action=login" style="background: #d1e8fa; color: #1d4372; font-weight: bold; font-size: 0.8rem;">LOGIN</a>
+                        <a class="btn rounded-pill px-4" href="index.php?action=login"
+                            style="background: #d1e8fa; color: #1d4372; font-weight: bold; font-size: 0.8rem;">LOGIN</a>
                     </li>
                 <?php endif; ?>
             </ul>
@@ -66,15 +68,14 @@ $isHome = ($action === 'home' || $action === '');
 </nav>
 
 <script>
-    // Hanya jalankan event scroll jika kita berada di halaman HOME
     <?php if ($isHome): ?>
-    window.addEventListener('scroll', function() {
-        const navbar = document.querySelector('.navbar-uag');
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
+        window.addEventListener('scroll', function () {
+            const navbar = document.querySelector('.navbar-uag');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
     <?php endif; ?>
 </script>

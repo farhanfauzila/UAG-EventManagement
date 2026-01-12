@@ -188,23 +188,40 @@
                 </div>
 
                 <div class="modal fade" id="modalSertif<?= $reg['id_regist'] ?>" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header bg-success text-white border-0">
-                                <h5 class="modal-title fw-bold">E-Sertifikat Tersedia</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body p-4 text-center">
-                                <i class="bi bi-patch-check-fill text-success display-4 mb-3"></i>
-                                <h5>Selamat, <?= $_SESSION['nama'] ?>!</h5>
-                                <p class="text-muted small">Kamu telah menyelesaikan event <strong><?= $reg['nama_event'] ?></strong>. Klik tombol di bawah untuk mengunduh:</p>
-                                <a href="<?= $reg['url_sertifikat'] ?>" target="_blank" class="btn btn-success w-100 fw-bold py-2 rounded-3 mt-2">
-                                    UNDUH SEKARANG <i class="bi bi-download ms-1"></i>
-                                </a>
-                            </div>
-                        </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
+            <div class="modal-header bg-success text-white border-0 px-4 py-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-patch-check me-2"></i>E-Sertifikat Tersedia</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-award-fill text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h5 class="fw-bold">Selamat, <?= htmlspecialchars($_SESSION['nama']) ?>!</h5>
+                <p class="text-muted small mb-4">Kamu telah menyelesaikan event <strong><?= htmlspecialchars($reg['nama_event']) ?></strong>. Berikut adalah akses sertifikat digitalmu:</p>
+                
+                <div class="p-3 bg-light rounded-4 border border-dashed mb-3">
+                    <label class="small fw-bold text-uppercase text-muted d-block mb-2">Link Akses Sertifikat:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-white border-0 text-primary fw-bold" 
+                               id="urlSertif<?= $reg['id_regist'] ?>" 
+                               value="<?= $reg['url_sertifikat'] ?>" readonly>
+                        <button class="btn btn-success px-3" type="button" onclick="copyToClipboard('urlSertif<?= $reg['id_regist'] ?>')">
+                            <i class="bi bi-clipboard"></i> Salin
+                        </button>
                     </div>
                 </div>
+
+                <div class="d-grid">
+                    <a href="<?= $reg['url_sertifikat'] ?>" target="_blank" class="btn btn-outline-success fw-bold rounded-pill py-2">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Buka Link di Tab Baru
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             <?php endforeach; endif; ?>
         </div>
     </div>
