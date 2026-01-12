@@ -3,163 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Saya - UAG Event Management</title>
+    <title>Dashboard Saya - UAG Event</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        .table-container { background: white; border-radius: 15px; overflow: hidden; }
-        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
-        .bg-pending { background-color: #fff3cd; color: #856404; }
-        .bg-paid { background-color: #d4edda; color: #155724; }
-        .bg-free { background-color: #cce5ff; color: #004085; }
-        .bg-info-custom { background-color: #cfe2ff; color: #084298; }
+        :root {
+            --primary: #1d4372;
+            --base: #f5f8f7;
+            --accent: #d1e8fa;
+        }
+
+        body { background-color: var(--base); font-family: 'Inter', sans-serif; padding-top: 100px; }
+
+        .profile-card {
+            background: linear-gradient(135deg, var(--primary) 0%, #0a1d36 100%);
+            color: white;
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 50px;
+            box-shadow: 0 15px 35px rgba(29, 67, 114, 0.2);
+        }
+
+        .profile-img { 
+            width: 100px; height: 100px; 
+            object-fit: cover; border-radius: 25px; 
+            border: 4px solid rgba(255,255,255,0.2);
+        }
+
+        .event-card { 
+            border: none; border-radius: 24px; 
+            background: white; transition: all 0.3s ease; 
+            overflow: hidden; height: 100%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .event-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+
+        .status-badge { 
+            position: absolute; top: 15px; right: 15px; 
+            padding: 8px 16px; border-radius: 50px; 
+            font-size: 0.7rem; font-weight: 800; 
+            text-transform: uppercase; z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 12px;
+        }
+
+        .btn-logout-uag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ff6b6b;
+            font-weight: 700; border-radius: 50px;
+        }
+        .btn-logout-uag:hover { background: #ff6b6b; color: white; }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-    <div class="container py-5">
-        <div class="row mb-4">
-            <div class="col-md-6 text-center text-md-start">
-                <h2 class="fw-bold">Event Saya</h2>
-                <p class="text-muted">Kelola pendaftaran dan ambil sertifikat kamu di sini.</p>
-            </div>
-            <div class="col-md-6 text-center text-md-end align-self-center">
-                <a href="index.php?action=katalog" class="btn btn-dark px-4 shadow-sm">Jelajahi Event</a>
+    <div class="container mb-5">
+        <div class="profile-card">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center text-md-start mb-3 mb-md-0">
+                    <?php 
+                        $avatar_url = "https://ui-avatars.com/api/?name=".urlencode($_SESSION['nama'])."&background=d1e8fa&color=1d4372&size=128&bold=true";
+                    ?>
+                    <img src="<?= $avatar_url ?>" class="profile-img" alt="Avatar">
+                </div>
+                <div class="col-md-7 text-center text-md-start">
+                    <h5 class="opacity-75 mb-1" style="color: var(--accent);">Selamat Datang,</h5>
+                    <h1 class="fw-bold mb-2"><?= $_SESSION['nama'] ?></h1>
+                    <p class="mb-0 opacity-75"><i class="bi bi-mortarboard me-2"></i>Mahasiswa UAG</p>
+                </div>
+                <div class="col-md-3 text-center text-md-end">
+                    <a href="index.php?action=logout" class="btn btn-logout-uag px-4 py-2" onclick="return confirm('Yakin ingin keluar?')">
+                        <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                    </a>
+                </div>
             </div>
         </div>
 
-        <div class="table-container shadow-sm">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 text-nowrap">
-                    <thead class="bg-dark text-white">
-                        <tr>
-                            <th class="ps-4 py-3">Informasi Event</th>
-                            <th>Waktu Daftar</th>
-                            <th>Status Pendaftaran</th>
-                            <th>Biaya</th>
-                            <th class="text-center">Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($my_registrations)): ?>
-                            <tr>
-                                <td colspan="5" class="text-center py-5">
-                                    <i class="bi bi-calendar2-x display-4 text-muted d-block mb-3"></i>
-                                    <p class="text-muted fs-5">Kamu belum mendaftar di event manapun.</p>
-                                </td>
-                            </tr>
-                        <?php else: foreach ($my_registrations as $reg): ?>
-                            <?php 
-                                // LOGIKA STATUS
-                                $is_pending = ($reg['status_pembayaran'] === 'pending');
-                                $is_paid_or_free = ($reg['status_pembayaran'] === 'paid' || $reg['status_pembayaran'] === 'free');
-                                $sudah_upload = !empty($reg['bukti_pembayaran']);
-                                $is_completed = (isset($reg['status_event']) && $reg['status_event'] === 'completed');
-                            ?>
-                            <tr>
-                                <td class="ps-4">
-                                    <span class="fw-bold d-block text-dark fs-6"><?= $reg['nama_event'] ?></span>
-                                    <small class="text-muted"><i class="bi bi-geo-alt"></i> <?= $reg['lokasi'] ?></small>
-                                </td>
-                                <td><?= date('d M Y, H:i', strtotime($reg['waktu_regist'])) ?></td>
-                                <td>
-                                    <?php if ($is_pending && $sudah_upload): ?>
-                                        <span class="status-badge bg-info-custom text-primary"><i class="bi bi-clock-history"></i> Menunggu Verifikasi</span>
-                                    <?php elseif ($is_pending): ?>
-                                        <span class="status-badge bg-pending text-warning"><i class="bi bi-credit-card"></i> Belum Bayar</span>
-                                    <?php elseif ($is_paid_or_free): ?>
-                                        <span class="status-badge bg-paid text-success"><i class="bi bi-patch-check-fill"></i> Terverifikasi</span>
-                                        <?php if ($is_completed): ?>
-                                            <span class="status-badge bg-dark text-white ms-1">Selesai</span>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="fw-bold">
-                                    <?= $reg['harga'] == 0 ? '<span class="text-primary">Gratis</span>' : 'Rp '.number_format($reg['harga'], 0, ',', '.') ?>
-                                </td>
-                                <td class="text-center">
-                                    <?php if ($is_pending && $sudah_upload): ?>
-                                        <button class="btn btn-sm btn-secondary fw-bold" disabled>
-                                            <i class="bi bi-hourglass-split"></i> Sedang Diproses
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-dark m-0"><i class="bi bi-rocket-takeoff me-2 text-primary"></i>Event Saya</h4>
+            <a href="index.php?action=katalog" class="btn btn-primary rounded-pill px-4">Cari Event Lain</a>
+        </div>
+
+        <div class="row g-4">
+            <?php if (empty($my_registrations)): ?>
+                <div class="col-12 text-center py-5">
+                    <div class="card border-0 rounded-4 p-5 bg-white shadow-sm">
+                        <i class="bi bi-calendar-x display-1 text-muted opacity-25"></i>
+                        <h4 class="text-muted mt-3">Kamu belum mendaftar ke event mana pun.</h4>
+                        <a href="index.php?action=katalog" class="btn btn-primary mt-3 px-5 py-2 rounded-pill">Explore Event Sekarang</a>
+                    </div>
+                </div>
+            <?php else: foreach ($my_registrations as $reg): 
+                $is_pending = ($reg['status_pembayaran'] === 'pending');
+                $is_paid = ($reg['status_pembayaran'] === 'paid' || $reg['status_pembayaran'] === 'free');
+                $sudah_upload = !empty($reg['bukti_pembayaran']);
+            ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card event-card position-relative">
+                        <?php if ($is_pending && $sudah_upload): ?>
+                            <span class="status-badge bg-info text-white">Diverifikasi</span>
+                        <?php elseif ($is_pending): ?>
+                            <span class="status-badge bg-warning text-dark">Pending</span>
+                        <?php elseif ($is_paid): ?>
+                            <span class="status-badge bg-success text-white">Terdaftar</span>
+                        <?php endif; ?>
+
+                        <div class="ratio ratio-4x3">
+                            <img src="assets/img/<?= htmlspecialchars($reg['poster_event'] ?? 'default.jpg') ?>" 
+                                 class="card-img-top" 
+                                 alt="Poster Event"
+                                 style="object-fit: cover;"
+                                 onerror="this.src='https://via.placeholder.com/400x300?text=Poster+UAG'">
+                        </div>
+                        
+                        <div class="card-body p-4 d-flex flex-column">
+                            <h5 class="fw-bold mb-3 text-dark text-truncate"><?= htmlspecialchars($reg['nama_event']) ?></h5>
+                            
+                            <div class="info-box mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-calendar3 me-2 text-primary"></i>
+                                    <small class="text-muted me-auto">Pelaksanaan:</small>
+                                    <small class="fw-bold"><?= date('d M Y', strtotime($reg['tanggal_mulai'])) ?></small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-geo-alt me-2 text-primary"></i>
+                                    <small class="text-muted me-auto">Lokasi:</small>
+                                    <small class="fw-bold text-truncate" style="max-width: 120px;"><?= $reg['lokasi'] ?></small>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-auto pt-2">
+                                <?php if ($is_pending && !$sudah_upload): ?>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary fw-bold py-2 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalBayar<?= $reg['id_regist'] ?>">
+                                            <i class="bi bi-upload me-2"></i>UPLOAD BUKTI BAYAR
                                         </button>
+                                        <a href="index.php?action=cancel_reg&id=<?= $reg['id_regist'] ?>" class="btn btn-sm text-danger text-decoration-none fw-bold" onclick="return confirm('Batalkan pendaftaran?')">Batalkan Pendaftaran</a>
+                                    </div>
+                                <?php elseif ($is_paid && ($reg['status_event'] ?? '') === 'completed'): ?>
+                                    <button class="btn btn-success w-100 fw-bold py-2 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalSertif<?= $reg['id_regist'] ?>">
+                                        <i class="bi bi-award me-2"></i>AMBIL SERTIFIKAT
+                                    </button>
+                                <?php elseif ($is_pending && $sudah_upload): ?>
+                                    <button class="btn btn-outline-info w-100 fw-bold py-2 rounded-3" disabled>PROSES VERIFIKASI</button>
+                                <?php else: ?>
+                                    <button class="btn btn-light w-100 text-muted fw-bold py-2 rounded-3" disabled>MENUNGGU ACARA</button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                                    <?php elseif ($is_pending): ?>
-                                        <button class="btn btn-sm btn-warning fw-bold px-3" data-bs-toggle="modal" data-bs-target="#modalBayar<?= $reg['id_regist'] ?>">Bayar</button>
-                                        <a href="index.php?action=cancel_reg&id=<?= $reg['id_regist'] ?>" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('Batalkan pendaftaran?')">Batal</a>
+                <div class="modal fade" id="modalBayar<?= $reg['id_regist'] ?>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content shadow-lg">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title fw-bold">Konfirmasi Pembayaran</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form action="index.php?action=upload_bukti" method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="id_regist" value="<?= $reg['id_regist'] ?>">
+                                <div class="modal-body p-4">
+                                    <p class="text-muted small mb-1">Silakan transfer sebesar:</p>
+                                    <h3 class="fw-bold text-primary mb-4">Rp <?= number_format($reg['harga'], 0, ',', '.') ?></h3>
+                                    <div class="p-3 bg-light rounded-3 border mb-4 text-center">
+                                        <small class="fw-bold text-dark d-block mb-1 text-uppercase">Metode Pembayaran:</small>
+                                        <p class="mb-0 small">Transfer ke: <strong>BCA 12345678</strong> (UAG Management)</p>
+                                    </div>
+                                    <label class="form-label fw-bold small">PILIH FILE BUKTI (JPG/PNG)</label>
+                                    <input type="file" name="bukti_file" class="form-control rounded-3" required>
+                                </div>
+                                <div class="modal-footer border-0">
+                                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3">KIRIM BUKTI</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-                                        <div class="modal fade" id="modalBayar<?= $reg['id_regist'] ?>" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content border-0 shadow">
-                                                    <div class="modal-header bg-warning"><h5 class="modal-title fw-bold">Instruksi Pembayaran</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                                                    <form action="index.php?action=upload_bukti" method="POST" enctype="multipart/form-data">
-                                                        <input type="hidden" name="id_regist" value="<?= $reg['id_regist'] ?>">
-                                                        <div class="modal-body text-start">
-                                                            <p class="mb-1 text-muted">Total Pembayaran:</p>
-                                                            <h3 class="fw-bold text-primary mb-4">Rp <?= number_format($reg['harga'], 0, ',', '.') ?></h3>
-                                                            <div class="p-3 bg-light border rounded mb-4">
-                                                                <small class="fw-bold text-muted d-block text-uppercase mb-1">Kirim Ke Rekening:</small>
-                                                                <span class="text-dark fs-5 fw-medium"><?= nl2br(htmlspecialchars($reg['info_bayar'])) ?></span>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label fw-bold">Upload Bukti Transfer</label>
-                                                                <input type="file" name="bukti_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer border-0"><button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Kirim Konfirmasi</button></div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    <?php elseif ($is_paid_or_free): ?>
-                                        <?php if ($is_completed): ?>
-                                            <button class="btn btn-sm btn-success fw-bold px-3" data-bs-toggle="modal" data-bs-target="#modalSertif<?= $reg['id_regist'] ?>">
-                                                <i class="bi bi-patch-check"></i> Ambil Sertifikat
-                                            </button>
-
-                                            <div class="modal fade" id="modalSertif<?= $reg['id_regist'] ?>" tabindex="-1" aria-hidden="true">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content border-0 shadow text-start">
-                                                        <div class="modal-header bg-success text-white">
-                                                            <h5 class="modal-title fw-bold">Sertifikat Tersedia</h5>
-                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p>Selamat! Kamu telah menyelesaikan event ini. Silakan buka link di bawah ini dan cari nama kamu untuk mengunduh sertifikat.</p>
-                                                            <div class="p-3 bg-light border rounded">
-                                                                <label class="fw-bold small text-muted text-uppercase d-block mb-2">Link Sertifikat:</label>
-                                                                <div class="input-group">
-                                                                    <input type="text" class="form-control form-control-sm" id="inputSertif<?= $reg['id_regist'] ?>" value="<?= htmlspecialchars($reg['url_sertifikat'] ?? 'Link belum diatur admin') ?>" readonly>
-                                                                    <button class="btn btn-outline-primary btn-sm" type="button" onclick="copyLink('inputSertif<?= $reg['id_regist'] ?>')">Salin</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer border-0"><button class="btn btn-secondary w-100" data-bs-dismiss="modal">Tutup</button></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="badge bg-success py-2 px-3 fw-bold"><i class="bi bi-check-circle"></i> Terdaftar</span>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                <div class="modal fade" id="modalSertif<?= $reg['id_regist'] ?>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white border-0">
+                                <h5 class="modal-title fw-bold">E-Sertifikat Tersedia</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4 text-center">
+                                <i class="bi bi-patch-check-fill text-success display-4 mb-3"></i>
+                                <h5>Selamat, <?= $_SESSION['nama'] ?>!</h5>
+                                <p class="text-muted small">Kamu telah menyelesaikan event <strong><?= $reg['nama_event'] ?></strong>. Klik tombol di bawah untuk mengunduh:</p>
+                                <a href="<?= $reg['url_sertifikat'] ?>" target="_blank" class="btn btn-success w-100 fw-bold py-2 rounded-3 mt-2">
+                                    UNDUH SEKARANG <i class="bi bi-download ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; endif; ?>
         </div>
     </div>
 
-    <script>
-    function copyLink(id) {
-        var copyText = document.getElementById(id);
-        copyText.select();
-        copyText.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(copyText.value);
-        alert("Link berhasil disalin!");
-    }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
