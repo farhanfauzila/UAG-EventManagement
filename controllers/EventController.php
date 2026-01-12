@@ -8,13 +8,20 @@ class EventController {
         $this->eventModel = new Event($db);
     }
 
-    public function tampilkanKatalog()
-    {
-        $event_status = $_GET['event_status'] ?? null;
-        $payment_type = $_GET['payment_type'] ?? null;
-        
-        $data_events = $this->eventModel->getFilteredEvents($event_status, $payment_type);
-        
+    public function tampilkanKatalog() {
+        $tipe = $_GET['tipe_event'] ?? null;
+        $payment = $_GET['payment_type'] ?? null;
+    
+        // Logika Default: Jika di URL tidak ada 'event_status', maka set ke 'ongoing'
+        // Tapi jika user klik filter 'Semua Status' (value kosong), maka jangan dipaksa ongoing.
+        if (!isset($_GET['event_status'])) {
+            $status = 'ongoing';
+        } else {
+            $status = $_GET['event_status']; // Bisa kosong, ongoing, completed, atau canceled
+        }
+    
+        $data_events = $this->eventModel->getFilteredEvents($tipe, $status, $payment);
+    
         include 'views/katalog_event.php';
     }
 
@@ -37,6 +44,12 @@ class EventController {
     
         $id_user = $_SESSION['user_id'];
         $event = $this->eventModel->getEventById($id_event);
+
+        $today = date('Y-m-d');
+    if ($event['tanggal_selesai'] < $today) {
+        echo "<script>alert('Maaf, event sudah berakhir!'); window.location.href='index.php?action=katalog';</script>";
+        return;
+    }
         
         if (!$event) {
             die("Event tidak ditemukan.");
@@ -134,5 +147,115 @@ class EventController {
         }
     }
 
+    public function getAllEvents() {
+        // Fungsi ini memanggil model untuk mengambil data dari tabel 'events'
+        return $this->eventModel->getAllEvents();
+    }
+
+    public function admin_dashboard() {
+        $pendaftaran = $this->eventModel->getAllRegistrations();
+        $events = $this->eventModel->getAllEvents();
+        
+        // Pastikan baris ini ada dan nama variabelnya 'statistik'
+        $statistik = $this->eventModel->getStatistikKeuangan(); 
+        
+        // Debug sebentar: Kalau ini muncul array, berarti aman.
+        // print_r($statistik); die(); 
+    
+        include 'views/admin_dashboard.php';
+    }
+
+    // Fungsi untuk menyimpan event baru
+public function create_event() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Ambil data dari form
+        $nama_event      = $_POST['nama_event'];
+        $deskripsi       = $_POST['deskripsi'];
+        $tipe_event      = $_POST['tipe_event'];
+        $tanggal_mulai   = $_POST['tanggal_mulai'];
+        $tanggal_selesai = $_POST['tanggal_selesai'];
+        $lokasi          = $_POST['lokasi'];
+        $kuota           = $_POST['kuota'];
+        $harga           = $_POST['harga'];
+
+        // Pengaturan Upload Poster
+        $poster_event = 'default.jpg'; // Jika admin tidak upload
+        if (!empty($_FILES['poster_event']['name'])) {
+            $nama_file = time() . "_" . $_FILES['poster_event']['name'];
+            $tujuan = "assets/img/" . $nama_file;
+            
+            if (move_uploaded_file($_FILES['poster_event']['tmp_name'], $tujuan)) {
+                $poster_event = $nama_file;
+            }
+        }
+
+        // Panggil Model untuk Insert
+        $result = $this->eventModel->saveEvent(
+            $nama_event, $deskripsi, $tipe_event, $tanggal_mulai, 
+            $tanggal_selesai, $lokasi, $kuota, $harga, $poster_event
+        );
+
+        if ($result) {
+            header("Location: index.php?action=admin_dashboard&status=success");
+        } else {
+            echo "Gagal menyimpan ke database.";
+        }
+    }
+}
+
+// Fungsi untuk update link sertifikat
+public function upload_sertifikat() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id_event = $_POST['id_event'];
+        $url = $_POST['url_sertifikat'];
+        
+        if ($this->eventModel->updateSertifikat($id_event, $url)) {
+            echo "<script>alert('Link sertifikat berhasil disimpan!'); window.location.href='index.php?action=admin_dashboard';</script>";
+        }
+    }
+}
+
+public function update_event() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id_event = $_POST['id_event'];
+        $data = [
+            'id_event'     => $id_event,
+            'nama_event'   => $_POST['nama_event'],
+            'lokasi'       => $_POST['lokasi'],
+            'kuota'        => $_POST['kuota'],
+            'harga'        => $_POST['harga'],
+            'status_event' => $_POST['status_event']
+        ];
+
+        // Cek jika ada upload poster baru
+        if (!empty($_FILES['poster_event']['name'])) {
+            $nama_file = time() . "_" . $_FILES['poster_event']['name'];
+            if (move_uploaded_file($_FILES['poster_event']['tmp_name'], "assets/img/" . $nama_file)) {
+                $data['poster_event'] = $nama_file;
+            }
+        }
+
+        if ($this->eventModel->updateEvent($data)) {
+            echo "<script>alert('Event berhasil diperbarui!'); window.location.href='index.php?action=admin_dashboard';</script>";
+        }
+    }
+}
+
+public function delete_event() {
+    $id = $_GET['id'] ?? null;
+    if ($id) {
+        if ($this->eventModel->deleteEvent($id)) {
+            echo "<script>alert('Event berhasil dihapus!'); window.location.href='index.php?action=admin_dashboard';</script>";
+        } else {
+            echo "<script>alert('Gagal menghapus event.'); window.location.href='index.php?action=admin_dashboard';</script>";
+        }
+    }
+}
+
+// Di dalam file EventController.php
+public function getStatistikKeuangan() {
+    // Controller memanggil fungsi yang ada di Model
+    return $this->eventModel->getStatistikKeuangan();
+}
     
 } // Kurung kurawal class yang benar

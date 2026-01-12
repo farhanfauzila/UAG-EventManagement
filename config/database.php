@@ -2,9 +2,9 @@
 class Database {
     private $host = "localhost";
     private $port = "5432";
-    private $db_name = "event_management";
+    private $db_name = "management_event";
     private $username = "postgres";
-    private $password = "09082003"; // ganti sesuai password postgres kamu
+    private $password = "1234"; // ganti sesuai password postgres kamu
     public $conn;
 
     public function getConnection() {

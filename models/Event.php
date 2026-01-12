@@ -34,32 +34,16 @@ class Event {
 
     public function daftarEvent($id_user, $id_event, $status) {
         try {
-            $this->db->beginTransaction();
-
-            // 1. Masukkan data ke tabel registrations
-            // Tambahkan kutip ganda jika menggunakan PostgreSQL agar tidak error
-            $query = "INSERT INTO registrations (id_user, id_event, waktu_regist, status_pembayaran) 
-                      VALUES (:id_user, :id_event, NOW(), :status)";
-            $stmt = $this->db->prepare($query);
+            $sql = "CALL sp_daftar_event(:id_user, :id_event, :status, NULL)";
+            $stmt = $this->db->prepare($sql);
             $stmt->bindParam(':id_user', $id_user);
             $stmt->bindParam(':id_event', $id_event);
             $stmt->bindParam(':status', $status);
-            $stmt->execute();
-
-            if ($status == 'free') {
-                $queryUpdate = "UPDATE events SET kuota = kuota - 1 WHERE id_event = :id_event";
-                $stmtUpdate = $this->db->prepare($queryUpdate);
-                $stmtUpdate->bindParam(':id_event', $id_event);
-                $stmtUpdate->execute();
-            }
-    
-    
-            $this->db->commit();
-            return true;
+            
+            return $stmt->execute();
         } catch (Exception $e) {
-            $this->db->rollBack();
-            // Aktifkan baris di bawah ini HANYA jika ingin melihat detail error saat testing
-            die("Error: " . $e->getMessage()); 
+            // Jika kuota penuh, PostgreSQL akan melempar EXCEPTION yang ditangkap di sini
+            die("Gagal Daftar: " . $e->getMessage()); 
             return false;
         }
     }
@@ -74,32 +58,26 @@ class Event {
     }
 
     public function getRegistrasiByUser($id_user) {
-    // Tambahkan e.tanggal_selesai ke dalam deretan SELECT
-    $sql = "SELECT r.*, e.nama_event, e.harga, e.tanggal_mulai, e.tanggal_selesai, e.lokasi, e.info_bayar, e.status_event
-            FROM registrations r 
-            JOIN events e ON r.id_event = e.id_event 
-            WHERE r.id_user = :id_user 
-            ORDER BY r.waktu_regist DESC";
+        $sql = "SELECT * FROM view_event_user WHERE id_user = :id_user ORDER BY waktu_regist DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id_user', $id_user);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindParam(':id_user', $id_user);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-    
-public function hapusPendaftaran($id_regist, $id_user) {
-    // Hanya hapus jika id_regist milik user tersebut DAN statusnya masih pending
-    $sql = "DELETE FROM registrations 
-            WHERE id_regist = :id_regist 
-            AND id_user = :id_user 
-            AND status_pembayaran = 'pending'";
-            
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindParam(':id_regist', $id_regist);
-    $stmt->bindParam(':id_user', $id_user);
-    
-    return $stmt->execute();
-}
+    public function hapusPendaftaran($id_regist, $id_user) {
+        // Trigger trg_pendaftaran_batal di DB akan otomatis mengembalikan kuota
+        $sql = "DELETE FROM registrations 
+                WHERE id_regist = :id_regist 
+                AND id_user = :id_user 
+                AND status_pembayaran = 'pending'";
+                
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id_regist', $id_regist);
+        $stmt->bindParam(':id_user', $id_user);
+        
+        return $stmt->execute();
+    }
 
     public function getEventTerbaru($limit) {
         $sql = "SELECT * FROM events ORDER BY id_event DESC LIMIT :limit";
@@ -118,11 +96,7 @@ public function hapusPendaftaran($id_regist, $id_user) {
     }
 
     public function getAllRegistrations() {
-        $sql = "SELECT r.*, u.nama as nama_mhs, e.nama_event 
-                FROM registrations r
-                JOIN users u ON r.id_user = u.id_user
-                JOIN events e ON r.id_event = e.id_event
-                ORDER BY r.waktu_regist DESC";
+        $sql = "SELECT * FROM view_pendaftar_event ORDER BY waktu_regist DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -144,31 +118,154 @@ public function hapusPendaftaran($id_regist, $id_user) {
         return $stmt->execute();
     }
     
-    public function getFilteredEvents($event_status = null, $payment_type = null)
-{
-    $sql = "SELECT * FROM events WHERE 1=1";
-    $params = [];
-
-    // FILTER STATUS EVENT
-    if (!empty($event_status)) {
-        $sql .= " AND status_event = :status_event";
-        $params[':status_event'] = $event_status;
-    }
-
-    // FILTER TIPE PEMBAYARAN
-    if (!empty($payment_type)) {
-        if ($payment_type === 'free') {
-            $sql .= " AND harga = 0";
-        } elseif ($payment_type === 'paid') {
-            $sql .= " AND harga > 0";
+    // Tambahkan $tipe di parameter pertama agar fungsi bisa membaca variabel tersebut
+    public function getFilteredEvents($tipe = null, $event_status = null, $payment_type = null)
+    {
+        // Gunakan CURRENT_DATE untuk PostgreSQL
+        $sql = "SELECT *, 
+                CASE 
+                    WHEN tanggal_selesai < CURRENT_DATE THEN 'completed'
+                    ELSE status_event 
+                END AS status_tampil
+                FROM events WHERE 1=1";
+        $params = [];
+    
+        if (!empty($tipe)) {
+            $sql .= " AND tipe_event = :tipe";
+            $params[':tipe'] = $tipe;
         }
+    
+        // FILTER STATUS EVENT
+        if (!empty($event_status)) {
+            if ($event_status === 'ongoing') {
+                $sql .= " AND status_event = 'ongoing' AND tanggal_selesai >= CURRENT_DATE";
+            } elseif ($event_status === 'completed') {
+                $sql .= " AND (status_event = 'completed' OR tanggal_selesai < CURRENT_DATE)";
+            } else {
+                $sql .= " AND status_event = :status_event";
+                $params[':status_event'] = $event_status;
+            }
+        }
+    
+        if (!empty($payment_type)) {
+            if ($payment_type === 'free') {
+                $sql .= " AND harga = 0";
+            } elseif ($payment_type === 'paid') {
+                $sql .= " AND harga > 0";
+            }
+        }
+    
+        // Gunakan id_event atau status_tampil untuk sorting
+        $sql .= " ORDER BY id_event DESC";
+    
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+    
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    $sql .= " ORDER BY id_event DESC";
+    public function getAllEvents() {
+        // Tambahkan CASE WHEN di sini juga agar Admin mendapatkan status otomatis
+        $sql = "SELECT *, 
+                CASE 
+                    WHEN tanggal_selesai < CURRENT_DATE THEN 'completed'
+                    ELSE status_event 
+                END AS status_tampil
+                FROM events 
+                ORDER BY id_event DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
+public function saveEvent($nama, $desc, $tipe, $tgl_m, $tgl_s, $lok, $kuota, $harga, $poster) {
+    $sql = "INSERT INTO events (nama_event, deskripsi, tipe_event, tanggal_mulai, tanggal_selesai, lokasi, kuota, harga, poster_event) 
+            VALUES (:nama, :desc, :tipe, :tgl_m, :tgl_s, :lok, :kuota, :harga, :poster)";
+    
     $stmt = $this->db->prepare($sql);
-    $stmt->execute($params);
+    return $stmt->execute([
+        ':nama'  => $nama,
+        ':desc'  => $desc,
+        ':tipe'  => $tipe,
+        ':tgl_m' => $tgl_m,
+        ':tgl_s' => $tgl_s,
+        ':lok'   => $lok,
+        ':kuota' => $kuota,
+        ':harga' => $harga,
+        ':poster'=> $poster
+    ]);
+}
 
+public function updateEvent($data) {
+    $sql = "UPDATE events SET 
+            nama_event = :nama, 
+            lokasi = :lokasi, 
+            kuota = :kuota, 
+            harga = :harga, 
+            status_event = :status";
+    
+    // Tambahkan update poster jika ada file baru
+    if (isset($data['poster_event'])) {
+        $sql .= ", poster_event = :poster";
+    }
+
+    $sql .= " WHERE id_event = :id";
+    
+    $stmt = $this->db->prepare($sql);
+    $params = [
+        ':nama'   => $data['nama_event'],
+        ':lokasi' => $data['lokasi'],
+        ':kuota'  => $data['kuota'],
+        ':harga'  => $data['harga'],
+        ':status' => $data['status_event'],
+        ':id'     => $data['id_event']
+    ];
+
+    if (isset($data['poster_event'])) {
+        $params[':poster'] = $data['poster_event'];
+    }
+
+    return $stmt->execute($params);
+}
+
+public function updateSertifikat($id_event, $url) {
+    $sql = "UPDATE events SET url_sertifikat = :url WHERE id_event = :id_event";
+    $stmt = $this->db->prepare($sql);
+    return $stmt->execute([
+        ':url' => $url,
+        ':id_event' => $id_event
+    ]);
+}
+
+public function deleteEvent($id) {
+    try {
+        $this->db->beginTransaction();
+
+        // 1. Hapus semua pendaftaran yang terkait dengan event ini dulu
+        $sql1 = "DELETE FROM registrations WHERE id_event = :id";
+        $stmt1 = $this->db->prepare($sql1);
+        $stmt1->execute([':id' => $id]);
+
+        // 2. Baru hapus event utamanya
+        $sql2 = "DELETE FROM events WHERE id_event = :id";
+        $stmt2 = $this->db->prepare($sql2);
+        $stmt2->execute([':id' => $id]);
+
+        $this->db->commit();
+        return true;
+    } catch (Exception $e) {
+        $this->db->rollBack();
+        return false;
+    }
+}
+
+
+public function getStatistikKeuangan() {
+    $this->db->query("REFRESH MATERIALIZED VIEW mv_event_financial_summary");
+    $sql = "SELECT * FROM mv_event_financial_summary";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

@@ -77,8 +77,15 @@ switch ($action) {
             header("Location: index.php?action=home");
             exit();
         }
-        // Ambil semua data pendaftaran yang perlu diverifikasi
+        
+        // Ambil data dari model
         $pendaftaran = $eventApp->getAllRegistrations(); 
+        $events = $eventApp->getAllEvents(); 
+        
+        // --- TAMBAHKAN BARIS INI ---
+        $statistik = $eventApp->getStatistikKeuangan(); 
+    
+        // Sekarang pendaftaran, events, DAN statistik sudah siap dikirim ke view
         include 'views/admin_dashboard.php';
         break;
 
@@ -93,6 +100,23 @@ switch ($action) {
                 $eventApp->rejectPayment($_GET['id']);
             }
             break;
+
+            case 'create_event':
+                $eventApp->create_event(); // Memanggil fungsi di Controller
+                break;
+
+                case 'update_event':
+                    $eventApp->update_event();
+                    break;
+        
+        // Tambahkan di dalam switch ($action)
+case 'upload_sertifikat':
+    $eventApp->upload_sertifikat();
+    break;
+
+case 'delete_event':
+    $eventApp->delete_event();
+    break;
 
     default:
         // Jika action tidak dikenal, lari ke home
